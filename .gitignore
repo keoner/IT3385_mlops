@@ -3,6 +3,11 @@ data/**
 !data/**/
 !data/**/.gitkeep
 !data/**/*.dvc
+notebooks/extra/useful_features.txt
+
+# mlflow stuff
+mlruns/
+mlartifacts/
 
 # Mac OS-specific storage files
 .DS_Store

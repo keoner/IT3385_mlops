@@ -8,13 +8,13 @@ cleaning:
 
 features:
   rolling_window_size: 5
-  sensor_columns: [temperature, vibration, humidity, pressure, energy_consumption, predicted_remaining_life, machine_status]
+  sensor_columns: [temperature, vibration, humidity, pressure, energy_consumption]
 
 model:
   n_jobs: 2
   session_id: 42
   train_size: 0.8
-  ignore_features: [failure_type, downtime_risk, anomaly_flag]
+  ignore_features: [failure_type, downtime_risk, anomaly_flag, machine_status, predicted_remaining_life]
 
 mlflow:
   tracking_uri: http://127.0.0.1:5000
