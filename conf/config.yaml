@@ -3,6 +3,8 @@ data:
   interim_path: ../data/interim/cleaned.csv
   processed_path: ../data/processed/features.csv
   target_column: maintenance_required
+  temporal_target_column: time_to_failure_minutes
+  anomaly_target_column: failure_type
 
 cleaning:
 
@@ -14,7 +16,10 @@ model:
   n_jobs: 2
   session_id: 42
   train_size: 0.8
-  ignore_features: [failure_type, downtime_risk, anomaly_flag, machine_status, predicted_remaining_life]
+  ignore_features: [failure_type, downtime_risk, anomaly_flag, machine_status, predicted_remaining_life, time_to_failure_minutes]
+  temporal_ignore_features: [failure_type, downtime_risk, anomaly_flag, machine_status, predicted_remaining_life, maintenance_required]
+  anomaly_models: [iforest, knn, lof, pca]
+  anomaly_ignore_features: [failure_type, downtime_risk, anomaly_flag, machine_status, predicted_remaining_life, time_to_failure_minutes, maintenance_required]
 
 mlflow:
   tracking_uri: http://127.0.0.1:5000

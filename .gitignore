@@ -8,6 +8,7 @@ notebooks/extra/useful_features.txt
 # mlflow stuff
 mlruns/
 mlartifacts/
+models/*.pkl
 
 # Mac OS-specific storage files
 .DS_Store
