@@ -159,7 +159,7 @@ def build_batch_df(suffix):
 
 st.title("Predictive Maintenance Dashboard")
 
-tab_class, tab_reg, tab_anom, tab_compare = st.tabs(["Classification", "Regression", "Anomaly", "Comparison"])
+tab_class, tab_reg, tab_anom = st.tabs(["Classification", "Regression", "Anomaly"])
 
 with tab_class:
     suffix = TASK_SUFFIX["classification"]
