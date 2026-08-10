@@ -2,10 +2,6 @@
 import streamlit as st
 import pandas as pd
 
-from pycaret.classification import load_model as load_clf, predict_model as predict_clf
-from pycaret.regression import load_model as load_reg, predict_model as predict_reg
-from pycaret.anomaly import load_model as load_anom, predict_model as predict_anom
-
 import os
 from huggingface_hub import hf_hub_download
 
@@ -44,17 +40,20 @@ def download_model():
 
 @st.cache_resource
 def get_classification_model(suffix):
+    from pycaret.classification import load_model as load_clf, predict_model as predict_clf
     download_model()
     return load_clf(f"{MODEL_DIR}/classification_{suffix}")
 
 @st.cache_resource
 def get_regression_model(suffix):
+    from pycaret.regression import load_model as load_reg, predict_model as predict_reg
     download_model()
     return load_reg(f"{MODEL_DIR}/regression_{suffix}")
 
 @st.cache_resource
 def get_anomaly_model(suffix):
     download_model()
+    from pycaret.anomaly import load_model as load_anom, predict_model as predict_anom
     return load_anom(f"{MODEL_DIR}/anomaly_{suffix}")
 
 st.sidebar.header("Sensor Input")
