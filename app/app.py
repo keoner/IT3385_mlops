@@ -9,7 +9,7 @@ from pycaret.anomaly import load_model as load_anom, predict_model as predict_an
 import os
 from huggingface_hub import hf_hub_download
 
-MODEL_DIR = "models"
+MODEL_DIR = "model"
 SENSOR_COLS = ["temperature", "vibration", "humidity", "pressure", "energy_consumption"]
 RANGES = {
     "temperature": (20.0, 120.0, 65.0),
@@ -29,7 +29,7 @@ MODEL_FILES = [
     "anomaly_cleaned.pkl",
 ]
 
-def download_models():
+def download_model():
     os.makedirs(MODEL_DIR, exist_ok=True)
     for fname in MODEL_FILES:
         local_path = os.path.join(MODEL_DIR, fname)
@@ -43,15 +43,19 @@ def download_models():
             shutil.copy(downloaded, local_path)
 
 @st.cache_resource
-def load_models():
-    download_models()
-    return {
-        "classification_cleaned": load_clf(f"{MODEL_DIR}/classification_cleaned"),
-        "regression_engineered": load_reg(f"{MODEL_DIR}/regression_engineered"),
-        "anomaly_cleaned": load_anom(f"{MODEL_DIR}/anomaly_cleaned"),
-    }
+def get_classification_model(suffix):
+    download_model()
+    return load_clf(f"{MODEL_DIR}/classification_{suffix}")
 
-models = load_models()
+@st.cache_resource
+def get_regression_model(suffix):
+    download_model()
+    return load_reg(f"{MODEL_DIR}/regression_{suffix}")
+
+@st.cache_resource
+def get_anomaly_model(suffix):
+    download_model()
+    return load_anom(f"{MODEL_DIR}/anomaly_{suffix}")
 
 st.sidebar.header("Sensor Input")
 
@@ -123,16 +127,17 @@ with tab_class:
     st.caption(f"Using the {suffix} model (only version currently deployed).")
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Predict maintenance requirement", disabled=not ready):
+        model = get_classification_model(suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
-            result = predict_clf(models[f"classification_{suffix}"], data=input_df)
+            result = predict_clf(model, data=input_df)
             label = int(result["prediction_label"].iloc[0])
             score = float(result["prediction_score"].iloc[0])
             st.write("Maintenance required" if label == 1 else "Normal operation")
             st.write(f"Confidence: {score * 100:.1f}%")
         else:
             batch_df = build_batch_df(suffix)
-            result = predict_clf(models[f"classification_{suffix}"], data=batch_df)
+            result = predict_clf(model, data=batch_df)
             display_df = batch_df.copy()
             display_df["prediction"] = result["prediction_label"].map({1: "Maintenance required", 0: "Normal"})
             display_df["confidence"] = (result["prediction_score"] * 100).round(1)
@@ -145,14 +150,15 @@ with tab_reg:
     st.caption(f"Using the {suffix} model (only version currently deployed).")
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Predict time to failure", disabled=not ready):
+        model = get_regression_model(suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
-            result = predict_reg(models[f"regression_{suffix}"], data=input_df)
+            result = predict_reg(model, data=input_df)
             minutes = float(result["prediction_label"].iloc[0])
             st.write(f"Predicted time to failure: {minutes:.0f} minutes")
         else:
             batch_df = build_batch_df(suffix)
-            result = predict_reg(models[f"regression_{suffix}"], data=batch_df)
+            result = predict_reg(model, data=batch_df)
             display_df = batch_df.copy()
             display_df["predicted_minutes_to_failure"] = result["prediction_label"].round(0)
             st.dataframe(display_df, use_container_width=True)
@@ -164,16 +170,17 @@ with tab_anom:
     st.caption(f"Using the {suffix} model (only version currently deployed).")
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Check for anomaly", disabled=not ready):
+        model = get_anomaly_model(suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
-            result = predict_anom(models[f"anomaly_{suffix}"], data=input_df)
+            result = predict_anom(model, data=input_df)
             flagged = int(result["Anomaly"].iloc[0])
             score = float(result["Anomaly_Score"].iloc[0])
             st.write("Anomaly detected" if flagged == 1 else "Normal pattern")
             st.write(f"Anomaly score: {score:.3f}")
         else:
             batch_df = build_batch_df(suffix)
-            result = predict_anom(models[f"anomaly_{suffix}"], data=batch_df)
+            result = predict_anom(model, data=batch_df)
             display_df = batch_df.copy()
             display_df["anomaly"] = result["Anomaly"].map({1: "Anomaly", 0: "Normal"})
             display_df["anomaly_score"] = result["Anomaly_Score"].round(3)
@@ -187,4 +194,4 @@ with tab_compare:
         "Deployed version": ["Cleaned", "Engineered", "Cleaned"],
         "Metric": ["F1: 0.623", "R2: 0.054", "F1: 0.511"],
     }))
-    st.caption("Only one version per task is deployed; add rows here once more models are uploaded to the HF repo.")
+    st.caption("Only one version per task is deployed; add rows here once more model are uploaded to the HF repo.")
