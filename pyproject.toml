@@ -49,6 +49,8 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["it3385_mlops"]
 force-sort-within-sections = true
 
+[tool.poetry]
+package-mode = false
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^7.3.0"
