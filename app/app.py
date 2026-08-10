@@ -122,7 +122,7 @@ with tab_class:
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Predict maintenance requirement", disabled=not ready):
         from pycaret.classification import predict_model as predict_clf
-        model = get_classification_model(suffix)
+        model = get_model("classification", suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
             result = predict_clf(model, data=input_df)
@@ -146,7 +146,7 @@ with tab_reg:
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Predict time to failure", disabled=not ready):
         from pycaret.regression import predict_model as predict_reg
-        model = get_regression_model(suffix)
+        model = get_model("regression", suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
             result = predict_reg(model, data=input_df)
@@ -167,7 +167,7 @@ with tab_anom:
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Check for anomaly", disabled=not ready):
         from pycaret.anomaly import predict_model as predict_anom
-        model = get_anomaly_model(suffix)
+        model = get_model("anomaly", suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
             result = predict_anom(model, data=input_df)
