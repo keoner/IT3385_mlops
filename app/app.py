@@ -78,26 +78,69 @@ TASK_SUFFIX = {
     "anomaly": "cleaned",
 }
 
+ROLLING_WINDOW_SIZE = 5  # Same as my config file
+
 def add_engineered_features(df):
-    """Compute real rolling stats per machine if machine_id/timestamp exist,
-    otherwise fall back to trivial values like the manual-input path does."""
     df = df.copy()
     has_grouping = "machine_id" in df.columns and "timestamp" in df.columns
+
     if has_grouping:
         df["timestamp"] = pd.to_datetime(df["timestamp"])
-        df = df.sort_values(["machine_id", "timestamp"])
+        df = df.sort_values(["machine_id", "timestamp"]).reset_index(drop=True)
+
+        # Time-based features
+        df["hour"] = df["timestamp"].dt.hour
+        df["day_of_week"] = df["timestamp"].dt.dayofweek
+        df["is_weekend"] = (df["day_of_week"] >= 5).astype(int)
+
+        def assign_shift(hour):
+            if 6 <= hour < 12:
+                return "Morning"
+            elif 12 <= hour < 19:
+                return "Afternoon"
+            else:
+                return "Night"
+
+        df["shift"] = df["hour"].apply(assign_shift).astype("category")
+
+        # Rolling mean, diff, zscore, interaction terms — per machine
         for c in SENSOR_COLS:
             grouped = df.groupby("machine_id")[c]
-            df[f"{c}_roll_mean"] = grouped.transform(lambda s: s.rolling(3, min_periods=1).mean())
-            df[f"{c}_roll_std"] = grouped.transform(lambda s: s.rolling(3, min_periods=1).std().fillna(0.0))
+
+            df[f"{c}_rolling_mean"] = grouped.transform(
+                lambda s: s.rolling(ROLLING_WINDOW_SIZE, min_periods=1).mean()
+            )
             df[f"{c}_diff"] = grouped.transform(lambda s: s.diff().fillna(0.0))
+
+            machine_mean = grouped.transform("mean")
+            machine_std = grouped.transform("std")
+            df[f"{c}_zscore"] = (df[c] - machine_mean) / machine_std.replace(0, 1)
+
+        df["temp_x_vibration"] = df["temperature"] * df["vibration"]
+        df["temp_x_pressure"] = df["temperature"] * df["pressure"]
+        df["vibration_x_pressure"] = df["vibration"] * df["pressure"]
+        df["temp_x_energy"] = df["temperature"] * df["energy_consumption"]
+
     else:
+        # Fallback for manual single-row input without machine_id/timestamp
+        df["hour"] = 12
+        df["day_of_week"] = 0
+        df["is_weekend"] = 0
+        df["shift"] = "Afternoon"
+
         for c in SENSOR_COLS:
-            df[f"{c}_roll_mean"], df[f"{c}_roll_std"], df[f"{c}_diff"] = df[c], 0.0, 0.0
+            df[f"{c}_rolling_mean"] = df[c]
+            df[f"{c}_diff"] = 0.0
+            df[f"{c}_zscore"] = 0.0
+
+        df["temp_x_vibration"] = df["temperature"] * df["vibration"]
+        df["temp_x_pressure"] = df["temperature"] * df["pressure"]
+        df["vibration_x_pressure"] = df["vibration"] * df["pressure"]
+        df["temp_x_energy"] = df["temperature"] * df["energy_consumption"]
+
     return df
 
 def build_input_row(suffix):
-    """Single-row DataFrame for manual input mode."""
     row = dict(values)
     row["machine_id"] = machine_id
     row["timestamp"] = pd.to_datetime(timestamp)
@@ -107,7 +150,6 @@ def build_input_row(suffix):
     return pd.DataFrame([row])
 
 def build_batch_df(suffix):
-    """Multi-row DataFrame for CSV upload mode."""
     df = uploaded_df.copy()
     if "timestamp" in df.columns:
         df["timestamp"] = pd.to_datetime(df["timestamp"])
@@ -187,11 +229,3 @@ with tab_anom:
             st.dataframe(display_df, use_container_width=True)
             st.download_button("Download results", display_df.to_csv(index=False), "anomaly_results.csv")
         st.caption("Trained without failure labels, so it flags statistically unusual readings only.")
-
-with tab_compare:
-    st.table(pd.DataFrame({
-        "Task": ["Classification", "Regression", "Anomaly"],
-        "Deployed version": ["Cleaned", "Engineered", "Cleaned"],
-        "Metric": ["F1: 0.623", "R2: 0.054", "F1: 0.511"],
-    }))
-    st.caption("Only one version per task is deployed; add rows here once more model are uploaded to the HF repo.")
