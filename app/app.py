@@ -38,23 +38,18 @@ def download_model():
             import shutil
             shutil.copy(downloaded, local_path)
 
-@st.cache_resource
-def get_classification_model(suffix):
-    from pycaret.classification import load_model as load_clf
+@st.cache_resource(max_entries=1)
+def get_model(task, suffix):
     download_model()
-    return load_clf(f"{MODEL_DIR}/classification_{suffix}")
-
-@st.cache_resource
-def get_regression_model(suffix):
-    from pycaret.regression import load_model as load_reg
-    download_model()
-    return load_reg(f"{MODEL_DIR}/regression_{suffix}")
-
-@st.cache_resource
-def get_anomaly_model(suffix):
-    download_model()
-    from pycaret.anomaly import load_model as load_anom
-    return load_anom(f"{MODEL_DIR}/anomaly_{suffix}")
+    if task == "classification":
+        from pycaret.classification import load_model as load_clf
+        return load_clf(f"{MODEL_DIR}/classification_{suffix}")
+    elif task == "regression":
+        from pycaret.regression import load_model as load_reg
+        return load_reg(f"{MODEL_DIR}/regression_{suffix}")
+    elif task == "anomaly":
+        from pycaret.anomaly import load_model as load_anom
+        return load_anom(f"{MODEL_DIR}/anomaly_{suffix}")
 
 st.sidebar.header("Sensor Input")
 
