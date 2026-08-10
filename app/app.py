@@ -40,20 +40,20 @@ def download_model():
 
 @st.cache_resource
 def get_classification_model(suffix):
-    from pycaret.classification import load_model as load_clf, predict_model as predict_clf
+    from pycaret.classification import load_model as load_clf
     download_model()
     return load_clf(f"{MODEL_DIR}/classification_{suffix}")
 
 @st.cache_resource
 def get_regression_model(suffix):
-    from pycaret.regression import load_model as load_reg, predict_model as predict_reg
+    from pycaret.regression import load_model as load_reg
     download_model()
     return load_reg(f"{MODEL_DIR}/regression_{suffix}")
 
 @st.cache_resource
 def get_anomaly_model(suffix):
     download_model()
-    from pycaret.anomaly import load_model as load_anom, predict_model as predict_anom
+    from pycaret.anomaly import load_model as load_anom
     return load_anom(f"{MODEL_DIR}/anomaly_{suffix}")
 
 st.sidebar.header("Sensor Input")
@@ -126,6 +126,7 @@ with tab_class:
     st.caption(f"Using the {suffix} model (only version currently deployed).")
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Predict maintenance requirement", disabled=not ready):
+        from pycaret.classification import predict_model as predict_clf
         model = get_classification_model(suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
@@ -149,6 +150,7 @@ with tab_reg:
     st.caption(f"Using the {suffix} model (only version currently deployed).")
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Predict time to failure", disabled=not ready):
+        from pycaret.regression import predict_model as predict_reg
         model = get_regression_model(suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
@@ -169,6 +171,7 @@ with tab_anom:
     st.caption(f"Using the {suffix} model (only version currently deployed).")
     ready = uploaded_df is not None if input_mode == "Upload CSV" else True
     if st.button("Check for anomaly", disabled=not ready):
+        from pycaret.anomaly import predict_model as predict_anom
         model = get_anomaly_model(suffix)
         if input_mode == "Manual input":
             input_df = build_input_row(suffix)
