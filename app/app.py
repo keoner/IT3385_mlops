@@ -108,9 +108,12 @@ def build_input_row(suffix):
 
 def build_batch_df(suffix):
     """Multi-row DataFrame for CSV upload mode."""
+    df = uploaded_df.copy()
+    if "timestamp" in df.columns:
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
     if suffix == "engineered":
-        return add_engineered_features(uploaded_df)
-    return uploaded_df.copy()
+        return add_engineered_features(df)
+    return df
 
 st.title("Predictive Maintenance Dashboard")
 
