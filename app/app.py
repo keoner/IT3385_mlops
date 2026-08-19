@@ -72,6 +72,12 @@ else:
             st.sidebar.success(f"Loaded {len(uploaded_df)} rows")
             st.sidebar.dataframe(uploaded_df.head(), use_container_width=True)
 
+st.sidebar.link_button(
+    "Go to Evan's site",
+    "https://google.com",
+    use_container_width=True
+)
+
 TASK_SUFFIX = {
     "classification": "cleaned",
     "regression": "engineered",
