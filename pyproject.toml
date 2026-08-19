@@ -28,7 +28,10 @@ dependencies = [
     "streamlit (>=1.61.1,<2.0.0)",
 ]
 requires-python = ">=3.10,<3.13"
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8f5a33e79917129addad2b6997e3807f4b991420
 
 [tool.ruff]
 line-length = 99
@@ -42,3 +45,5 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["it3385_mlops"]
 force-sort-within-sections = true
 
+[tool.poetry]
+package-mode = false
