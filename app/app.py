@@ -1,6 +1,7 @@
 # streamlit run app/app.py
 import streamlit as st
 import pandas as pd
+import gc
 
 import os
 from huggingface_hub import hf_hub_download
@@ -38,18 +39,20 @@ def download_model():
             import shutil
             shutil.copy(downloaded, local_path)
 
-@st.cache_resource(max_entries=1)
 def get_model(task, suffix):
-    download_model()
+    download_model(f"{task}_{suffix}.pkl")
+
     if task == "classification":
-        from pycaret.classification import load_model as load_clf
-        return load_clf(f"{MODEL_DIR}/classification_{suffix}")
+        from pycaret.classification import load_model
+        return load_model(f"{MODEL_DIR}/classification_{suffix}")
+
     elif task == "regression":
-        from pycaret.regression import load_model as load_reg
-        return load_reg(f"{MODEL_DIR}/regression_{suffix}")
+        from pycaret.regression import load_model
+        return load_model(f"{MODEL_DIR}/regression_{suffix}")
+
     elif task == "anomaly":
-        from pycaret.anomaly import load_model as load_anom
-        return load_anom(f"{MODEL_DIR}/anomaly_{suffix}")
+        from pycaret.anomaly import load_model
+        return load_model(f"{MODEL_DIR}/anomaly_{suffix}")
 
 st.sidebar.header("Sensor Input")
 
@@ -189,6 +192,8 @@ with tab_class:
             display_df["confidence"] = (result["prediction_score"] * 100).round(1)
             st.dataframe(display_df, use_container_width=True)
             st.download_button("Download results", display_df.to_csv(index=False), "classification_results.csv")
+        del model
+        gc.collect()
         st.caption("Precision is high but recall is around 45%, so some real cases may be missed.")
 
 with tab_reg:
@@ -210,6 +215,8 @@ with tab_reg:
             display_df["predicted_minutes_to_failure"] = result["prediction_label"].round(0)
             st.dataframe(display_df, use_container_width=True)
             st.download_button("Download results", display_df.to_csv(index=False), "regression_results.csv")
+        del model
+        gc.collect()
         st.caption("R² was around 0.05-0.06 on this dataset, so treat this as a rough estimate.")
 
 with tab_anom:
@@ -234,4 +241,6 @@ with tab_anom:
             display_df["anomaly_score"] = result["Anomaly_Score"].round(3)
             st.dataframe(display_df, use_container_width=True)
             st.download_button("Download results", display_df.to_csv(index=False), "anomaly_results.csv")
+        del model
+        gc.collect()
         st.caption("Trained without failure labels, so it flags statistically unusual readings only.")
