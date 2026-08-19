@@ -3,7 +3,7 @@ import pandas as pd
 
 MODEL_DIR = "model"
 
-st.set_page_config(page_title="Employee Burnout Predictor", page_icon="🧭", layout="wide")
+st.set_page_config(page_title="Employee Burnout Predictor", layout="wide")
 
 NUMERIC_RANGES = {
     "work_hours_per_week": (20.0, 90.0, 47.0),
