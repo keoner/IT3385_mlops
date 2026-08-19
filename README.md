@@ -32,10 +32,11 @@ cd it3385_mlops
 
 The project's dependencies are defined in `pyproject.toml` and `poetry.lock`.
 
-Install all required dependencies using:
+Install all required dependencies & activate env using:
 
 ```bash
 poetry install
+.\.venv\Scripts\activate
 ```
 
 ### 3. Run the Streamlit Application
