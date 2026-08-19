@@ -74,7 +74,7 @@ else:
 
 st.sidebar.link_button(
     "Go to Evan's site",
-    "https://google.com",
+    "https://it3385-mlops-hu9z.onrender.com",
     use_container_width=True
 )
 
